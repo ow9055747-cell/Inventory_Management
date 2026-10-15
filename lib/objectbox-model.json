@@ -1,0 +1,286 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:4524246403201958918",
+      "lastPropertyId": "9:5585636801469303556",
+      "name": "Ordertrack",
+      "properties": [
+        {
+          "id": "1:1896650030706106429",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:936546890379572920",
+          "name": "selerid",
+          "type": 6
+        },
+        {
+          "id": "3:9136993387714176607",
+          "name": "warehouseid",
+          "type": 6
+        },
+        {
+          "id": "4:6728293154058502595",
+          "name": "productid",
+          "type": 6
+        },
+        {
+          "id": "5:2697856748898503355",
+          "name": "quantity",
+          "type": 6
+        },
+        {
+          "id": "6:1846210078226599328",
+          "name": "totalprice",
+          "type": 6
+        },
+        {
+          "id": "7:8740724950223437138",
+          "name": "descriptive_remark",
+          "type": 9
+        },
+        {
+          "id": "8:4203430535935584837",
+          "name": "fullfilled",
+          "type": 1
+        },
+        {
+          "id": "9:5585636801469303556",
+          "name": "partially_completed",
+          "type": 1
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "2:6184023718878033107",
+      "lastPropertyId": "5:4114512888294529908",
+      "name": "Product",
+      "properties": [
+        {
+          "id": "1:2030089468143175410",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:2267422840415000623",
+          "name": "productname",
+          "type": 9
+        },
+        {
+          "id": "3:321127752085880937",
+          "name": "categoryId",
+          "type": 6
+        },
+        {
+          "id": "4:965255536249795402",
+          "name": "warehouseid",
+          "type": 6
+        },
+        {
+          "id": "5:4114512888294529908",
+          "name": "quantity",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "3:9062698180531419006",
+      "lastPropertyId": "3:2998679310077744568",
+      "name": "ProductCategory",
+      "properties": [
+        {
+          "id": "1:5982908715806150181",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:5969674739394986887",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "3:2998679310077744568",
+          "name": "warehouseId",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "4:281220712775068105",
+      "lastPropertyId": "6:1405672600771235333",
+      "name": "Saler",
+      "properties": [
+        {
+          "id": "1:1222047472959163107",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:2415428588765979210",
+          "name": "salerName",
+          "type": 9
+        },
+        {
+          "id": "3:6012856993799339779",
+          "name": "salerContact",
+          "type": 9
+        },
+        {
+          "id": "4:917302095601532082",
+          "name": "remarks",
+          "type": 9
+        },
+        {
+          "id": "5:2193524646415510733",
+          "name": "categoryId",
+          "type": 6
+        },
+        {
+          "id": "6:1405672600771235333",
+          "name": "warehouseId",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "5:5427826877824768825",
+      "lastPropertyId": "6:4571235682750996305",
+      "name": "Stock",
+      "properties": [
+        {
+          "id": "1:6567620180696268377",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:1958156028483346021",
+          "name": "warehouseId",
+          "type": 6
+        },
+        {
+          "id": "3:5170154562625056340",
+          "name": "branchCode",
+          "type": 9
+        },
+        {
+          "id": "4:1854074787360221089",
+          "name": "categoryId",
+          "type": 6
+        },
+        {
+          "id": "5:8578680629590392571",
+          "name": "productId",
+          "type": 6
+        },
+        {
+          "id": "6:4571235682750996305",
+          "name": "sellingPrice",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "6:4925446716497048624",
+      "lastPropertyId": "7:2105694040425156187",
+      "name": "UserModel",
+      "properties": [
+        {
+          "id": "1:8791432376429595321",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:4795114236213229772",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "3:3685589913570885486",
+          "name": "warehouseId",
+          "type": 6
+        },
+        {
+          "id": "4:7652053278952804046",
+          "name": "role",
+          "type": 9
+        },
+        {
+          "id": "5:7804400005007876397",
+          "name": "passcode",
+          "type": 9
+        },
+        {
+          "id": "6:1161984763363590278",
+          "name": "email",
+          "type": 9
+        },
+        {
+          "id": "7:2105694040425156187",
+          "name": "branchCode",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "7:3593289018009117860",
+      "lastPropertyId": "5:9149683551600995611",
+      "name": "Warehouse",
+      "properties": [
+        {
+          "id": "1:7954615257410360448",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:5882068544087365389",
+          "name": "mainBranch",
+          "type": 1
+        },
+        {
+          "id": "3:6807343411849601031",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "4:3391044682341424694",
+          "name": "branchCode",
+          "type": 9
+        },
+        {
+          "id": "5:9149683551600995611",
+          "name": "address",
+          "type": 9
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "7:3593289018009117860",
+  "lastIndexId": "0:0",
+  "lastRelationId": "0:0",
+  "lastSequenceId": "0:0",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [],
+  "retiredRelationUids": [],
+  "version": 1
+}
