@@ -91,7 +91,20 @@ class AuthGate extends ConsumerWidget {
       case 'admin':
         return const AdminScreen();
       case 'shopkeeper':
-        return const ShopkeeperScreen();
+        if (user.warehouseId == null) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Inventory')),
+            body: const Center(
+              child: Text(
+                'No warehouse is assigned to this shopkeeper. '
+                'Please contact the administrator.',
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        }
+
+        return ShopkeeperScreen(warehouseId: user.warehouseId!);
       default:
         return Scaffold(
           appBar: AppBar(title: const Text('Inventory')),

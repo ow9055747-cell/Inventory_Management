@@ -20,7 +20,7 @@ class Superadmin {
 
   // Get all admin users
   List<UserModel> getAllUsers() {
-    return ob.getAllUsers().where((user) => user.role == 'admin').toList();
+    return ob.getAllUsers().toList();
   }
 
   // Get user by email

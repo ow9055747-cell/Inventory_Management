@@ -14,21 +14,20 @@ class Supercontroller extends StateNotifier<Supermodel> {
     : service = Superadmin(db),
       super(Supermodel(actual: [], filtered: [], adminsac: [], adminfi: []));
 
-  // ==================== SYNC STATE ====================
-
+  // Refresh all data from ObjectBox.
   void syncData() {
     final users = service.getAllUsers();
     final warehouses = service.getAllWarehouses();
 
     state = state.copyWith(
-      adminsac: users,
-      adminfi: users,
-      actual: warehouses,
-      filtered: warehouses,
+      adminsac: List<UserModel>.of(users),
+      adminfi: List<UserModel>.of(users),
+      actual: List<Warehouse>.of(warehouses),
+      filtered: List<Warehouse>.of(warehouses),
     );
   }
 
-  // ==================== USER OPERATIONS ====================
+  // ---------------- USERS ----------------
 
   void addUser(UserModel user) {
     service.createUser(user);
@@ -44,7 +43,7 @@ class Supercontroller extends StateNotifier<Supermodel> {
   }
 
   bool emailExists(String email) {
-    return service.emailExists(email);
+    return service.emailExists(email.trim().toLowerCase());
   }
 
   bool updateUser({
@@ -55,7 +54,7 @@ class Supercontroller extends StateNotifier<Supermodel> {
     String? passcode,
     String? branchCode,
   }) {
-    final updated = service.updateUser(
+    final success = service.updateUser(
       email: email,
       name: name,
       warehouseId: warehouseId,
@@ -64,21 +63,21 @@ class Supercontroller extends StateNotifier<Supermodel> {
       branchCode: branchCode,
     );
 
-    if (updated) {
+    if (success) {
       syncData();
     }
 
-    return updated;
+    return success;
   }
 
   bool deleteUser(String email) {
-    final deleted = service.deleteUser(email);
+    final success = service.deleteUser(email);
 
-    if (deleted) {
+    if (success) {
       syncData();
     }
 
-    return deleted;
+    return success;
   }
 
   void deleteAllUsers() {
@@ -86,14 +85,13 @@ class Supercontroller extends StateNotifier<Supermodel> {
     syncData();
   }
 
-  // ==================== USER FILTERS ====================
-
+  // Optional controller-side user filters.
   void filterUserByEmail(String email) {
-    final value = email.trim().toLowerCase();
+    final query = email.trim().toLowerCase();
 
     state = state.copyWith(
       adminfi: state.adminsac
-          .where((user) => user.email.trim().toLowerCase() == value)
+          .where((user) => user.email.toLowerCase() == query)
           .toList(),
     );
   }
@@ -103,7 +101,7 @@ class Supercontroller extends StateNotifier<Supermodel> {
 
     state = state.copyWith(
       adminfi: value.isEmpty
-          ? state.adminsac
+          ? List<UserModel>.of(state.adminsac)
           : state.adminsac
                 .where((user) => user.name.toLowerCase().contains(value))
                 .toList(),
@@ -115,7 +113,7 @@ class Supercontroller extends StateNotifier<Supermodel> {
 
     state = state.copyWith(
       adminfi: value.isEmpty
-          ? state.adminsac
+          ? List<UserModel>.of(state.adminsac)
           : state.adminsac
                 .where((user) => user.email.toLowerCase().contains(value))
                 .toList(),
@@ -123,10 +121,10 @@ class Supercontroller extends StateNotifier<Supermodel> {
   }
 
   void resetUserFilter() {
-    state = state.copyWith(adminfi: state.adminsac);
+    state = state.copyWith(adminfi: List<UserModel>.of(state.adminsac));
   }
 
-  // ==================== WAREHOUSE OPERATIONS ====================
+  // ---------------- WAREHOUSES ----------------
 
   List<Warehouse> getAllWarehouses() {
     return service.getAllWarehouses();
@@ -137,18 +135,16 @@ class Supercontroller extends StateNotifier<Supermodel> {
   }
 
   bool warehouseNameExists(String name, {int? excludeId}) {
-    final normalizedName = name.trim().toLowerCase();
+    final value = name.trim().toLowerCase();
 
-    if (normalizedName.isEmpty) {
-      return false;
-    }
+    if (value.isEmpty) return false;
 
     return getAllWarehouses().any((warehouse) {
       if (excludeId != null && warehouse.id == excludeId) {
         return false;
       }
 
-      return warehouse.name.trim().toLowerCase() == normalizedName;
+      return warehouse.name.trim().toLowerCase() == value;
     });
   }
 
@@ -180,20 +176,15 @@ class Supercontroller extends StateNotifier<Supermodel> {
     String? branchCode,
     String? address,
   }) {
-    final existingWarehouse = service.getWarehouse(id);
+    final existing = service.getWarehouse(id);
 
-    if (existingWarehouse == null) {
-      return false;
-    }
+    if (existing == null) return false;
 
     if (name != null) {
       final cleanedName = name.trim();
 
-      if (cleanedName.isEmpty) {
-        return false;
-      }
-
-      if (warehouseNameExists(cleanedName, excludeId: id)) {
+      if (cleanedName.isEmpty ||
+          warehouseNameExists(cleanedName, excludeId: id)) {
         return false;
       }
 
@@ -209,26 +200,23 @@ class Supercontroller extends StateNotifier<Supermodel> {
     );
 
     syncData();
-
     return true;
   }
 
   bool deleteWarehouse(int id) {
-    final deleted = service.deleteWarehouse(id);
+    final success = service.deleteWarehouse(id);
 
-    if (deleted) {
+    if (success) {
       syncData();
     }
 
-    return deleted;
+    return success;
   }
 
   void deleteAllWarehouses() {
     service.deleteAllWarehouses();
     syncData();
   }
-
-  // ==================== WAREHOUSE FILTERS ====================
 
   void filterWarehouseById(int id) {
     state = state.copyWith(
@@ -241,7 +229,7 @@ class Supercontroller extends StateNotifier<Supermodel> {
 
     state = state.copyWith(
       filtered: value.isEmpty
-          ? state.actual
+          ? List<Warehouse>.of(state.actual)
           : state.actual
                 .where(
                   (warehouse) => warehouse.name.toLowerCase().contains(value),
@@ -255,7 +243,7 @@ class Supercontroller extends StateNotifier<Supermodel> {
 
     state = state.copyWith(
       filtered: value.isEmpty
-          ? state.actual
+          ? List<Warehouse>.of(state.actual)
           : state.actual
                 .where((warehouse) => warehouse.id.toString().contains(value))
                 .toList(),
@@ -263,6 +251,6 @@ class Supercontroller extends StateNotifier<Supermodel> {
   }
 
   void resetWarehouseFilter() {
-    state = state.copyWith(filtered: state.actual);
+    state = state.copyWith(filtered: List<Warehouse>.of(state.actual));
   }
 }

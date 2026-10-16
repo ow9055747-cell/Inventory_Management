@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:inventory/controller/SuperadminController.dart';
 
+import 'package:inventory/controller/SuperadminController.dart';
 import 'package:inventory/model/usermodel.dart';
 import 'package:inventory/model/warehouse.dart';
 import 'package:inventory/provider/superAdminProvider.dart';
@@ -15,16 +15,15 @@ class UserManagementScreen extends ConsumerStatefulWidget {
 }
 
 class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
-  final TextEditingController searchController = TextEditingController();
+  final searchController = TextEditingController();
 
   String searchQuery = '';
   String selectedRoleFilter = 'all';
 
   final List<String> roles = ['admin', 'shopkeeper'];
 
-  String normalizeRole(String role) {
-    return role.trim().toLowerCase().replaceAll('_', '').replaceAll(' ', '');
-  }
+  String normalizeRole(String role) =>
+      role.trim().toLowerCase().replaceAll('_', '').replaceAll(' ', '');
 
   @override
   void initState() {
@@ -43,8 +42,6 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
     super.dispose();
   }
 
-  // ==================== FILTER USERS ====================
-
   List<UserModel> filterUsers(List<UserModel> users) {
     final query = searchQuery.trim().toLowerCase();
 
@@ -61,12 +58,18 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
     }).toList();
   }
 
-  // ==================== CREATE / EDIT USER ====================
+  void showMessage(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
 
   Future<void> showUserForm({UserModel? user}) async {
-    final isEditing = user != null;
-
+    final editing = user != null;
     final controller = ref.read(superprovider.notifier);
+
+    // Get the current warehouse list from ObjectBox.
     final warehouses = controller.getAllWarehouses();
 
     final result = await showDialog<_UserFormResult>(
@@ -86,58 +89,58 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
     final passcode = result.passcode.trim();
     final isAdmin = result.role == 'admin';
 
-    // Admin: branch code, no warehouse.
-    // Shopkeeper: warehouse, no branch code.
     final String? branchCode = isAdmin
         ? result.branchCode.trim().toUpperCase()
         : null;
 
     final int? warehouseId = isAdmin ? null : result.warehouseId;
 
-    final userController = ref.read(superprovider.notifier);
-
-    // CREATE
-    if (!isEditing) {
-      if (userController.emailExists(email)) {
-        _showMessage('This email is already registered.');
+    if (!editing) {
+      if (controller.emailExists(email)) {
+        showMessage('This email is already registered.');
         return;
       }
 
-      userController.addUser(
-        UserModel(
-          name: name,
-          email: email,
-          warehouseId: warehouseId,
-          role: result.role,
-          passcode: passcode,
-          branchCode: branchCode,
-        ),
-      );
+      try {
+        controller.addUser(
+          UserModel(
+            name: name,
+            email: email,
+            warehouseId: warehouseId,
+            role: result.role,
+            passcode: passcode,
+            branchCode: branchCode,
+          ),
+        );
 
-      if (mounted) {
-        _showMessage('User created successfully.');
+        // addUser refreshes controller state after saving.
+        showMessage('User created successfully.');
+      } catch (e) {
+        showMessage('Could not create user: $e');
       }
+
       return;
     }
 
-    // UPDATE
-    final success = userController.updateUser(
-      email: user.email,
-      name: name,
-      warehouseId: warehouseId,
-      role: result.role,
-      passcode: passcode,
-      branchCode: branchCode,
-    );
-
-    if (mounted) {
-      _showMessage(
-        success ? 'User updated successfully.' : 'Failed to update user.',
+    try {
+      final success = controller.updateUser(
+        email: user.email,
+        name: name,
+        warehouseId: warehouseId,
+        role: result.role,
+        passcode: passcode,
+        branchCode: branchCode,
       );
+
+      showMessage(
+        success
+            ? 'User updated successfully.'
+            : 'Failed to update user. Check the email and database.',
+      );
+    } catch (e) {
+      showMessage('Could not update user: $e');
     }
   }
-
-  // ==================== DELETE USER ====================
 
   Future<void> confirmDelete(UserModel user) async {
     final confirmed = await showDialog<bool>(
@@ -161,27 +164,23 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
 
     if (confirmed != true || !mounted) return;
 
-    final success = ref.read(superprovider.notifier).deleteUser(user.email);
+    try {
+      final success = ref.read(superprovider.notifier).deleteUser(user.email);
 
-    if (mounted) {
-      _showMessage(
+      showMessage(
         success ? 'User deleted successfully.' : 'Failed to delete user.',
       );
+    } catch (e) {
+      showMessage('Could not delete user: $e');
     }
   }
 
-  void _showMessage(String message) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  // ==================== MAIN UI ====================
-
   @override
   Widget build(BuildContext context) {
+    // This subscription causes the screen to rebuild when state changes.
     final state = ref.watch(superprovider);
+
+    // Use the complete user list, not the controller's filtered list.
     final users = filterUsers(state.adminsac);
     final warehouses = state.actual;
 
@@ -195,7 +194,6 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // SEARCH
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: TextField(
@@ -222,7 +220,6 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
               ),
             ),
 
-            // ROLE FILTER
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
@@ -263,7 +260,6 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
               ),
             ),
 
-            // USER COUNT
             Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -275,7 +271,6 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
               ),
             ),
 
-            // USER LIST
             Expanded(
               child: users.isEmpty
                   ? const Center(
@@ -343,8 +338,7 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                                             size: 16,
                                           ),
                                           label: Text(
-                                            'Branch: '
-                                            '${user.branchCode ?? "Not assigned"}',
+                                            'Branch: ${user.branchCode ?? "Not assigned"}',
                                           ),
                                           visualDensity: VisualDensity.compact,
                                         )
@@ -357,8 +351,7 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                                           label: Text(
                                             warehouse == null
                                                 ? 'Warehouse not assigned'
-                                                : '${warehouse.name} '
-                                                      '(ID: ${warehouse.id})',
+                                                : '${warehouse.name} (ID: ${warehouse.id})',
                                           ),
                                           visualDensity: VisualDensity.compact,
                                         ),
@@ -410,10 +403,6 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
   }
 }
 
-// ============================================================
-// FORM RESULT
-// ============================================================
-
 class _UserFormResult {
   final String name;
   final String email;
@@ -431,11 +420,6 @@ class _UserFormResult {
     required this.warehouseId,
   });
 }
-
-// ============================================================
-// USER FORM DIALOG
-// Controllers are owned and disposed by this widget.
-// ============================================================
 
 class _UserFormDialog extends StatefulWidget {
   final UserModel? user;
@@ -525,12 +509,12 @@ class _UserFormDialogState extends State<_UserFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final warehouseQuery = warehouseSearchController.text.trim().toLowerCase();
+    final query = warehouseSearchController.text.trim().toLowerCase();
 
-    final matchingWarehouses = warehouseQuery.isEmpty
+    final matchingWarehouses = query.isEmpty
         ? <Warehouse>[]
         : widget.warehouses.where((warehouse) {
-            return warehouse.name.toLowerCase().contains(warehouseQuery);
+            return warehouse.name.toLowerCase().contains(query);
           }).toList();
 
     Warehouse? selectedWarehouse;
@@ -552,7 +536,6 @@ class _UserFormDialogState extends State<_UserFormDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // NAME
                 TextFormField(
                   controller: nameController,
                   textCapitalization: TextCapitalization.words,
@@ -561,17 +544,12 @@ class _UserFormDialogState extends State<_UserFormDialog> {
                     prefixIcon: Icon(Icons.person_outline),
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Enter the user name';
-                    }
-                    return null;
-                  },
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Enter the user name'
+                      : null,
                 ),
-
                 const SizedBox(height: 14),
 
-                // EMAIL
                 TextFormField(
                   controller: emailController,
                   readOnly: isEditing,
@@ -583,17 +561,13 @@ class _UserFormDialogState extends State<_UserFormDialog> {
                   ),
                   validator: (value) {
                     final email = value?.trim() ?? '';
-                    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                        .hasMatch(email)) {
-                      return 'Enter a valid email';
-                    }
-                    return null;
+                    return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)
+                        ? null
+                        : 'Enter a valid email';
                   },
                 ),
-
                 const SizedBox(height: 14),
 
-                // PASSCODE
                 TextFormField(
                   controller: passcodeController,
                   obscureText: obscurePasscode,
@@ -614,17 +588,12 @@ class _UserFormDialogState extends State<_UserFormDialog> {
                     ),
                     border: const OutlineInputBorder(),
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Enter a passcode';
-                    }
-                    return null;
-                  },
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Enter a passcode'
+                      : null,
                 ),
-
                 const SizedBox(height: 14),
 
-                // ROLE
                 DropdownButtonFormField<String>(
                   value: selectedRole,
                   decoration: const InputDecoration(
@@ -633,7 +602,7 @@ class _UserFormDialogState extends State<_UserFormDialog> {
                     border: OutlineInputBorder(),
                   ),
                   items: widget.roles.map((role) {
-                    return DropdownMenuItem<String>(
+                    return DropdownMenuItem(
                       value: role,
                       child: Text(role[0].toUpperCase() + role.substring(1)),
                     );
@@ -649,10 +618,8 @@ class _UserFormDialogState extends State<_UserFormDialog> {
                     });
                   },
                 ),
-
                 const SizedBox(height: 22),
 
-                // ADMIN: BRANCH CODE
                 if (isAdmin)
                   TextFormField(
                     controller: branchCodeController,
@@ -663,29 +630,23 @@ class _UserFormDialogState extends State<_UserFormDialog> {
                       prefixIcon: Icon(Icons.qr_code),
                       border: OutlineInputBorder(),
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Enter a branch code';
-                      }
-                      return null;
-                    },
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Enter a branch code'
+                        : null,
                   ),
 
-                // SHOPKEEPER: WAREHOUSE
                 if (!isAdmin) ...[
                   Text(
                     'Assign Warehouse',
                     style: Theme.of(context).textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.w600),
                   ),
-
                   const SizedBox(height: 8),
 
                   TextFormField(
                     controller: warehouseSearchController,
                     decoration: InputDecoration(
                       labelText: 'Search warehouse by name',
-                      hintText: 'Enter warehouse name',
                       prefixIcon: const Icon(Icons.search),
                       suffixIcon: IconButton(
                         tooltip: 'Clear warehouse',
@@ -710,34 +671,23 @@ class _UserFormDialogState extends State<_UserFormDialog> {
                       }
 
                       final exists = widget.warehouses.any(
-                        (warehouse) => warehouse.id == selectedWarehouseId,
+                        (w) => w.id == selectedWarehouseId,
                       );
 
-                      if (!exists) {
-                        return 'Select an existing warehouse';
-                      }
-
-                      return null;
+                      return exists ? null : 'Select an existing warehouse';
                     },
                   ),
-
                   const SizedBox(height: 10),
 
                   if (widget.warehouses.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Text(
-                        'Create a warehouse before assigning a shopkeeper.',
-                      ),
+                    const Text(
+                      'Create a warehouse before assigning a shopkeeper.',
                     ),
 
-                  if (warehouseQuery.isNotEmpty && matchingWarehouses.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Text(
-                        'No matching warehouse found.',
-                        style: TextStyle(color: Colors.red),
-                      ),
+                  if (query.isNotEmpty && matchingWarehouses.isEmpty)
+                    const Text(
+                      'No matching warehouse found.',
+                      style: TextStyle(color: Colors.red),
                     ),
 
                   if (matchingWarehouses.isNotEmpty)
@@ -755,32 +705,30 @@ class _UserFormDialogState extends State<_UserFormDialog> {
                         separatorBuilder: (_, __) => const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final warehouse = matchingWarehouses[index];
-                          final isSelected =
-                              warehouse.id == selectedWarehouseId;
+                          final selected = warehouse.id == selectedWarehouseId;
 
                           return ListTile(
                             dense: true,
-                            selected: isSelected,
+                            selected: selected,
                             leading: Icon(
-                              isSelected
+                              selected
                                   ? Icons.check_circle
                                   : Icons.warehouse_outlined,
                             ),
                             title: Text(warehouse.name),
                             subtitle: Text(
-                              'Warehouse ID: ${warehouse.id}\n'
+                              'ID: ${warehouse.id}\n'
                               'Branch code: ${warehouse.branchCode}',
                             ),
                             isThreeLine: true,
                             trailing: Icon(
-                              isSelected ? Icons.check : Icons.chevron_right,
+                              selected ? Icons.check : Icons.chevron_right,
                             ),
                             onTap: () {
                               setState(() {
                                 selectedWarehouseId = warehouse.id;
                                 warehouseSearchController.text = warehouse.name;
                               });
-
                               FocusScope.of(context).unfocus();
                             },
                           );
@@ -803,7 +751,6 @@ class _UserFormDialogState extends State<_UserFormDialog> {
                             'Selected warehouse',
                             style: TextStyle(fontWeight: FontWeight.w600),
                           ),
-                          const SizedBox(height: 4),
                           Text('Name: ${selectedWarehouse.name}'),
                           Text('ID: ${selectedWarehouse.id}'),
                         ],

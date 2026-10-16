@@ -11,6 +11,24 @@ import 'package:inventory/model/product.dart';
 import 'package:inventory/model/saler.dart';
 import 'package:inventory/model/stock.dart';
 
+//ordertracking (update manually like remarks)->model-ordertracking.dart,saler id present here
+// add product category in product category model
+// add product in product model
+// crud saler details in saler model
+// add or crud stock in shop
+//where warehouse id required it will automatically assigns from current user credentials
+// it is shop keeper services so all time branch code will be null here only warehouse id will be given here
+//user means shoopkeeper can do any thing with warehouse id it automatically fetched and will be given where required
+//
+//view page
+//  |
+// <..>
+//Here on product page will be a search option on product (after clicking on product add product happens in stock) and two button add seller and add category
+// first it will show all current stock avail (Here shoop keeper can crud stock)
+// here in each product card have a order option after click have to choose saller among th sellors belong to the product category
+//this order details can be show in order tracking page and seller can crud details //if a order fully completed then crud cant be performed on it
+//and a alert option if a product quantity go down to a below limit then it will give alert if value up then automatically alert will remove
+
 class ShopkeeperService {
   final ObjectBoxService db;
 
@@ -33,8 +51,12 @@ class ShopkeeperService {
     categoryDb.addCategory(category);
   }
 
-  List<ProductCategory> getAllCategories() {
-    return categoryDb.getAllCategories();
+  //get only the warehouse data where shopkeeper belong
+  List<ProductCategory>? getAllCategories(int warehouseId) {
+    return categoryDb
+        .getAllCategories()
+        .where((e) => e.warehouseId == warehouseId)
+        .toList();
   }
 
   ProductCategory? getCategory(int id) {
@@ -211,5 +233,3 @@ class ShopkeeperService {
     stockDb.deleteAllStock();
   }
 }
-
-//see->category,products(with price and  quantity),sh
